@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="32" fill="#b91c1c"/>
+  <g transform="translate(96 96)">
+    <!-- Flamme externe blanche -->
+    <path fill="#ffffff" d="M0 -68
+      C -16 -44, -36 -28, -36 4
+      C -36 36, -18 60, 0 64
+      C 18 60, 36 36, 36 4
+      C 36 -16, 22 -22, 12 -16
+      C 8 -38, 4 -54, 0 -68 Z"/>
+    <!-- Flamme intérieure ambre -->
+    <path fill="#fbbf24" d="M0 -28
+      C -10 -12, -22 0, -22 18
+      C -22 36, -10 50, 0 52
+      C 10 50, 22 36, 22 18
+      C 22 6, 14 0, 8 4
+      C 6 -10, 2 -20, 0 -28 Z"/>
+    <!-- Cœur rouge -->
+    <path fill="#b91c1c" d="M0 6
+      C -6 14, -12 20, -12 30
+      C -12 38, -6 44, 0 46
+      C 6 44, 12 38, 12 30
+      C 12 22, 6 18, 2 20
+      C 1 14, 0 10, 0 6 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>FireOps — Aide à la décision pompiers</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon-192.svg">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FireOps">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  /* Mode clair sobre — palette médicale / institutionnelle */
+  --bg:#f5f7fa;
+  --surface:#ffffff;
+  --surface-2:#f9fafb;
+  --surface-3:#f3f4f6;
+  --border:#e5e7eb;
+  --border-bright:#d1d5db;
+  --text:#111827;
+  --text-dim:#4b5563;
+  --text-mute:#9ca3af;
+
+  /* Accent unique : bleu marine institutionnel */
+  --cyan:#1d4ed8;
+  --cyan-soft:#eff6ff;
+  --cyan-line:#bfdbfe;
+
+  --green:#15803d;
+  --green-soft:#dcfce7;
+
+  --orange:#c2410c;
+  --orange-soft:#ffedd5;
+
+  --red:#b91c1c;
+  --red-soft:#fee2e2;
+  --red-glow:rgba(185,28,28,.18);
+
+  --amber:#a16207;
+  --amber-soft:#fef3c7;
+
+  --shadow-1:0 1px 2px rgba(17,24,39,.04);
+  --shadow-2:0 4px 12px rgba(17,24,39,.08);
+  --grid-line:transparent;
+}
+
+html,body{height:100%}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  color:var(--text);
+  background:var(--bg);
+  min-height:100vh;
+  padding-bottom:env(safe-area-inset-bottom);
+  overflow-x:hidden;
+}
+
+/* ============================================================
+   HEADER — fixed top, fond blanc sobre
+   ============================================================ */
+header{
+  position:sticky;top:0;z-index:50;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:env(safe-area-inset-top) 16px 0;
+}
+.header-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  height:60px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{
+  width:36px;height:36px;border-radius:8px;
+  background:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.brand-text{font-weight:700;font-size:18px;letter-spacing:0;color:var(--text)}
+.brand-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-mute);letter-spacing:.1em;text-transform:uppercase;margin-top:-1px}
+.header-right{display:flex;align-items:center;gap:8px}
+.clock{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;font-weight:500;
+  color:var(--text-dim);
+  background:var(--surface-3);
+  border:1px solid var(--border);
+  padding:6px 10px;border-radius:6px;
+  font-variant-numeric:tabular-nums;
+  display:flex;align-items:center;gap:6px;
+}
+.clock::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+.btn-install{
+  background:var(--cyan-soft);
+  border:1px solid var(--cyan-line);
+  color:var(--cyan);
+  padding:6px 12px;border-radius:6px;
+  font:inherit;font-size:12px;font-weight:600;
+  cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-install:hover{background:var(--cyan);color:white}
+.btn-install:active{transform:scale(.97)}
+
+.offline-chip{
+  background:var(--orange-soft);color:var(--orange);
+  padding:5px 10px;border-radius:6px;
+  font-size:11px;font-weight:600;
+  border:1px solid var(--orange);
+}
+
+@media (max-width:540px){
+  .btn-install{padding:6px 8px;font-size:11px}
+  .offline-chip{font-size:10px;padding:4px 7px}
+  .clock{font-size:11px;padding:5px 8px}
+}
+
+/* ============================================================
+   STATUS BANNER — operational state
+   ============================================================ */
+.status-banner{
+  position:sticky;
+  top:60px;
+  z-index:40;
+  margin:14px 16px 0;
+  border-radius:8px;
+  padding:14px 16px 14px 20px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-2);
+}
+.status-banner::before{
+  content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+  background:var(--text-mute);
+}
+.status-banner.NOMINAL::before{background:var(--green)}
+.status-banner.TENDU::before{background:var(--orange)}
+.status-banner.DEPASSE::before{background:var(--red)}
+
+.status-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.status-label{
+  font-size:12px;font-weight:600;color:var(--text-dim);
+  margin-bottom:6px;
+}
+.status-banner.NOMINAL .status-label{color:var(--green)}
+.status-banner.TENDU .status-label{color:var(--orange)}
+.status-banner.DEPASSE .status-label{color:var(--red)}
+.status-level{
+  font-weight:700;
+  font-size:20px;letter-spacing:0;line-height:1.25;
+  color:var(--text);
+}
+.status-meta{font-size:13px;color:var(--text-dim);margin-top:4px}
+.status-icon{
+  width:40px;height:40px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  background:var(--surface-3);
+  flex-shrink:0;
+  color:var(--text-dim);
+}
+.status-banner.NOMINAL .status-icon{background:var(--green-soft);color:var(--green)}
+.status-banner.TENDU .status-icon{background:var(--orange-soft);color:var(--orange)}
+.status-banner.DEPASSE .status-icon{background:var(--red-soft);color:var(--red)}
+
+.status-pills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pill{
+  font-size:12px;font-weight:500;
+  padding:3px 9px;border-radius:4px;
+  background:var(--surface-3);
+  color:var(--text-dim);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.pill.alert{color:var(--red);background:var(--red-soft)}
+.pill.warn{color:var(--orange);background:var(--orange-soft)}
+.pill.ok{color:var(--green);background:var(--green-soft)}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+main{
+  max-width:900px;margin:0 auto;
+  padding:14px 16px 100px;
+}
+
+.panel{display:none}
+.panel.active{display:block}
+
+.section-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin:22px 0 10px;
+  padding:0 2px;
+}
+.section-title{
+  font-weight:700;
+  font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text-dim);
+}
+.section-sub{font-size:11px;color:var(--text-mute)}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:12px;
+  overflow:hidden;
+}
+.card-head{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.card-icon{
+  width:32px;height:32px;border-radius:6px;
+  background:var(--surface-3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.card-title{font-weight:600;font-size:14px;line-height:1.2}
+.card-desc{font-size:11px;color:var(--text-mute);margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
+.card-body{padding:16px}
+
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+.field-label{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:8px;
+}
+.field-name{font-size:13px;font-weight:500;color:var(--text)}
+.field-unit{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-mute);letter-spacing:.05em}
+.field-value{
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  font-size:18px;color:var(--cyan);
+  font-variant-numeric:tabular-nums;
+  min-width:60px;text-align:right;
+}
+
+/* Slider */
+input[type=range]{
+  width:100%;
+  -webkit-appearance:none;appearance:none;
+  height:6px;border-radius:3px;
+  background:var(--surface-3);
+  outline:none;cursor:pointer;
+  background-image:linear-gradient(var(--cyan), var(--cyan));
+  background-size:var(--pct,0%) 100%;
+  background-repeat:no-repeat;
+  border:1px solid var(--border);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--cyan);
+  cursor:pointer;
+  border:2px solid white;
+  box-shadow:var(--shadow-1);
+}
+input[type=range]::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--cyan);cursor:pointer;
+  border:2px solid white;
+  box-shadow:var(--shadow-1);
+}
+.range-bounds{display:flex;justify-content:space-between;margin-top:6px}
+.range-bound{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-mute)}
+
+/* Input pair : slider + numeric input */
+.input-pair{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.input-pair input[type=range]{flex:1}
+.num-input{
+  width:72px;flex-shrink:0;
+  padding:6px 8px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;font-weight:600;color:var(--cyan);
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.num-input:focus{outline:2px solid var(--cyan-line);outline-offset:0;border-color:var(--cyan)}
+.input-suffix{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--text-mute);
+}
+
+/* Segmented control */
+.segmented{
+  display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
+  gap:0;
+  background:var(--surface-3);
+  border:1px solid var(--border);
+  border-radius:6px;padding:3px;
+}
+.seg-btn{
+  background:transparent;border:none;
+  padding:10px 8px;
+  font:inherit;font-size:13px;font-weight:500;
+  color:var(--text-dim);
+  border-radius:4px;cursor:pointer;
+  min-height:44px;
+}
+.seg-btn:hover{color:var(--text)}
+.seg-btn.active{
+  background:var(--surface);
+  color:var(--cyan);
+  font-weight:600;
+  box-shadow:var(--shadow-1);
+}
+.seg-btn small{display:block;font-size:11px;color:var(--text-mute);margin-top:2px;font-weight:400}
+.seg-btn.active small{color:var(--text-dim)}
+
+/* Counter */
+.counter{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:0;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  overflow:hidden;
+}
+.counter-btn{
+  width:48px;height:48px;border:none;background:transparent;
+  font-size:22px;font-weight:400;color:var(--text);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.counter-btn:hover{background:var(--surface-3)}
+.counter-btn:active{background:var(--cyan-soft);color:var(--cyan)}
+.counter-val{
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  font-size:24px;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ============================================================
+   METRIC DISPLAY — big numbers (the killer feature)
+   ============================================================ */
+.metric-grid{
+  display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;
+  margin-bottom:12px;
+}
+.metric{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  position:relative;
+}
+.metric.alert{border-left:3px solid var(--red)}
+.metric.warn{border-left:3px solid var(--orange)}
+.metric.ok{border-left:3px solid var(--green)}
+
+.metric-label{
+  font-size:11px;letter-spacing:.02em;text-transform:uppercase;font-weight:600;
+  color:var(--text-dim);
+  margin-bottom:8px;
+}
+.metric-value{
+  font-weight:700;
+  font-size:30px;line-height:1.1;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+  display:flex;align-items:baseline;gap:6px;
+}
+.metric.alert .metric-value{color:var(--red)}
+.metric.warn .metric-value{color:var(--orange)}
+.metric.ok .metric-value{color:var(--green)}
+.metric-unit{font-weight:500;font-size:13px;color:var(--text-mute)}
+.metric-foot{font-size:12px;color:var(--text-dim);margin-top:6px}
+
+/* ============================================================
+   TRIAGE COUNTERS (NOVI)
+   ============================================================ */
+.triage-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.triage-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px;
+  position:relative;
+}
+.triage-card.UA{border-left:3px solid var(--red)}
+.triage-card.UR{border-left:3px solid var(--orange)}
+.triage-card.UD{border-left:3px solid var(--text-mute)}
+.triage-card.UI{border-left:3px solid var(--green)}
+.triage-tag{
+  font-weight:700;
+  font-size:11px;letter-spacing:.05em;
+  padding:3px 8px;border-radius:4px;display:inline-block;
+}
+.triage-card.UA .triage-tag{background:var(--red-soft);color:var(--red)}
+.triage-card.UR .triage-tag{background:var(--orange-soft);color:var(--orange)}
+.triage-card.UD .triage-tag{background:var(--surface-3);color:var(--text-dim)}
+.triage-card.UI .triage-tag{background:var(--green-soft);color:var(--green)}
+.triage-name{font-size:12px;color:var(--text-dim);margin-top:6px}
+.triage-counter{margin-top:10px}
+
+/* ============================================================
+   AUDIT LOG
+   ============================================================ */
+.console{
+  background:var(--surface-3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  line-height:1.7;
+  max-height:380px;overflow-y:auto;
+  color:var(--text-dim);
+}
+.log-line{white-space:pre-wrap;word-break:break-word}
+.log-title{color:var(--cyan);font-weight:700;margin-top:10px;margin-bottom:4px}
+.log-title:first-of-type{margin-top:0}
+.log-total{color:var(--amber);font-weight:700;border-top:1px solid var(--border);margin-top:4px;padding-top:4px}
+.log-warn{color:var(--orange)}
+.log-alert{color:var(--red);font-weight:700}
+.log-ok{color:var(--green)}
+.log-meta{color:var(--text-mute);font-size:11px;margin-bottom:10px}
+
+/* ============================================================
+   ACTIONS LIST
+   ============================================================ */
+.action-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.action-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--cyan);
+  border-radius:6px;
+}
+.action-item.alert{border-left-color:var(--red);background:var(--red-soft)}
+.action-item.warn{border-left-color:var(--orange);background:var(--orange-soft)}
+.action-num{
+  width:24px;height:24px;flex-shrink:0;
+  background:var(--cyan-soft);color:var(--cyan);
+  border-radius:50%;
+  font-weight:700;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:1px;
+}
+.action-item.alert .action-num{background:white;color:var(--red)}
+.action-item.warn .action-num{background:white;color:var(--orange)}
+.action-text{flex:1}
+.action-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.action-desc{font-size:12px;color:var(--text-dim);line-height:1.5}
+
+/* ============================================================
+   SIMULATIONS
+   ============================================================ */
+.sim-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.sim-card{
+  display:block;width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;padding:16px 18px;
+  cursor:pointer;text-align:left;
+  font:inherit;color:inherit;
+  transition:border-color .15s, background .15s;
+}
+.sim-card:hover{border-color:var(--border-bright);background:var(--surface-2)}
+.sim-card:active{background:var(--surface-3)}
+.sim-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.sim-icon{font-size:22px}
+.sim-title{font-weight:700;font-size:15px}
+.sim-tag{
+  margin-left:auto;
+  font-size:11px;font-weight:600;letter-spacing:.02em;
+  padding:3px 8px;border-radius:4px;
+  background:var(--surface-3);color:var(--text-mute);
+}
+.sim-card.crit .sim-tag{background:var(--red-soft);color:var(--red)}
+.sim-card.warn .sim-tag{background:var(--orange-soft);color:var(--orange)}
+.sim-card.ok .sim-tag{background:var(--green-soft);color:var(--green)}
+.sim-desc{font-size:13px;color:var(--text-dim);line-height:1.5}
+
+/* ============================================================
+   BOTTOM NAV — mobile-first thumb-zone
+   ============================================================ */
+nav.bottom{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+  display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
+}
+.nav-btn{
+  background:transparent;border:none;
+  padding:6px 4px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  font:inherit;color:var(--text-mute);cursor:pointer;
+  border-radius:6px;
+  min-height:54px;
+}
+.nav-btn:hover{color:var(--text-dim);background:var(--surface-2)}
+.nav-btn.active{color:var(--cyan);background:var(--cyan-soft)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-weight:600;font-size:11px;letter-spacing:0}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (min-width:720px){
+  main{padding:24px 24px 110px}
+  .triage-grid{grid-template-columns:repeat(4,1fr)}
+  .sim-grid{grid-template-columns:repeat(2,1fr)}
+  .header-inner{height:68px}
+  .brand-text{font-size:20px}
+  .status-level{font-size:34px}
+  .status-banner{top:68px}
+}
+@media (min-width:980px){
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+}
+
+/* Scrollbar */
+.console::-webkit-scrollbar{width:6px}
+.console::-webkit-scrollbar-track{background:transparent}
+.console::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
+
+/* Focus accessibility */
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+
+/* Warning strip — disclaimers visibles */
+.warn-strip{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 16px;
+  background:var(--amber-soft);
+  border-bottom:1px solid var(--border);
+  font-size:12px;line-height:1.5;color:var(--text);
+}
+.warn-strip-icon{flex-shrink:0;font-size:16px;color:var(--amber);line-height:1.2}
+.warn-strip strong{font-weight:700}
+.warn-strip-strong{
+  background:var(--red-soft);
+  border:1px solid var(--red);
+  border-radius:6px;
+  margin:0 0 14px;
+  font-size:13px;
+}
+.warn-strip-strong .warn-strip-icon{color:var(--red)}
+
+/* Quickstart */
+.quickstart{
+  background:var(--cyan-soft);
+  border:1px solid var(--cyan-line);
+  border-radius:8px;
+  padding:14px 16px;
+  margin-bottom:16px;
+}
+.qs-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.qs-icon{font-size:18px}
+.qs-title{
+  font-weight:700;
+  font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--cyan);
+}
+.qs-steps{list-style:none;counter-reset:qs;padding-left:0;display:flex;flex-direction:column;gap:8px}
+.qs-steps li{
+  counter-increment:qs;
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:13px;line-height:1.5;color:var(--text-dim);
+  padding-left:0;
+}
+.qs-steps li::before{
+  content:counter(qs);
+  width:22px;height:22px;flex-shrink:0;
+  background:var(--surface);color:var(--cyan);
+  border:1px solid var(--cyan-line);
+  border-radius:50%;
+  font-weight:700;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:1px;
+}
+.qs-steps strong{color:var(--text);font-weight:600}
+
+/* Help text under field labels */
+.field-help{
+  font-size:11px;color:var(--text-mute);
+  margin-top:4px;line-height:1.4;
+  font-style:italic;
+}
+
+/* Status chip — discrete tag at top of banner */
+.status-chip{display:inline-flex;align-items:center;gap:6px}
+
+/* Action highlight in banner */
+.status-level.action{font-size:20px;line-height:1.25;font-weight:700}
+
+/* Error toast — visible UI for engine failures */
+.error-toast{
+  position:fixed;left:16px;right:16px;bottom:80px;
+  z-index:60;
+  padding:12px 14px;
+  background:var(--red-soft);
+  border:1px solid var(--red);
+  border-radius:8px;
+  display:flex;align-items:flex-start;gap:10px;
+  box-shadow:var(--shadow-2);
+  font-size:13px;color:var(--text);
+}
+.error-toast-icon{font-size:18px;color:var(--red);line-height:1.2;flex-shrink:0}
+.error-toast-body{flex:1;line-height:1.5}
+.error-toast-body strong{display:block;color:var(--red);font-weight:700;margin-bottom:2px}
+.error-toast-close{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--red);font-size:16px;line-height:1;
+  padding:4px 6px;border-radius:4px;
+  flex-shrink:0;
+}
+.error-toast-close:hover{background:rgba(185,28,28,.1)}
+@media (min-width:720px){
+  .error-toast{left:auto;right:24px;max-width:380px}
+}
+
+/* Export buttons */
+.export-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.btn-ghost{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 10px;
+  font:inherit;font-size:12px;font-weight:500;
+  color:var(--text-dim);
+  cursor:pointer;
+  transition:border-color .15s, color .15s;
+}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-ghost:active{background:var(--cyan-soft)}
+.export-feedback{
+  margin-top:12px;padding:8px 12px;
+  background:var(--green-soft);
+  color:var(--green);
+  border-radius:6px;font-size:12px;font-weight:600;
+}
+
+/* Doctrine tables */
+.doctrine-table{
+  width:100%;border-collapse:collapse;font-size:13px;
+}
+.doctrine-table th{
+  text-align:left;font-weight:600;color:var(--text-dim);
+  padding:8px 10px;border-bottom:1px solid var(--border);
+  font-size:11px;letter-spacing:.04em;text-transform:uppercase;
+}
+.doctrine-table td{
+  padding:9px 10px;border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+.doctrine-table tr:last-child td{border-bottom:none}
+.doctrine-table code{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  background:var(--surface-3);
+  padding:2px 6px;border-radius:4px;
+  color:var(--cyan);font-weight:500;
+  white-space:nowrap;
+}
+.doctrine-warn{
+  margin-top:14px;padding:10px 12px;
+  background:var(--amber-soft);
+  color:var(--amber);
+  border-radius:6px;font-size:12px;line-height:1.5;
+}
+.doctrine-warn strong{font-weight:700}
+@media (max-width:540px){
+  .doctrine-table{font-size:12px}
+  .doctrine-table th, .doctrine-table td{padding:7px 6px}
+  .doctrine-table code{font-size:11px;padding:1px 4px}
+}
+
+/* Footer note */
+.foot-note{
+  margin:24px 0 0;
+  padding:12px 14px;
+  background:var(--surface-3);border:1px solid var(--border);border-radius:6px;
+  font-size:12px;color:var(--text-dim);line-height:1.6;
+}
+.foot-note strong{color:var(--text)}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">🚒</div>
+      <div>
+        <div class="brand-text">FireOps</div>
+        <div class="brand-sub">Pédagogique — non certifié</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="install-btn" class="btn-install" style="display:none" onclick="pwa.install()" title="Installer l'app">⤓ Installer</button>
+      <span id="offline-chip" class="offline-chip" style="display:none" title="Mode hors-ligne">⚡ Hors-ligne</span>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+</header>
+
+<div class="warn-strip" role="alert">
+  <span class="warn-strip-icon">⚠</span>
+  <span><strong>Outil pédagogique / entraînement.</strong> Aide à la décision non certifiée — ne remplace ni la doctrine COS/COSSIM ni l'évaluation tactique du chef d'agrès.</span>
+</div>
+
+<!-- ============================================================
+     STATUS BANNER — Top action (action-oriented)
+     ============================================================ -->
+<div class="status-banner NOMINAL" id="status-banner">
+  <div class="status-row">
+    <div style="flex:1;min-width:0">
+      <div class="status-label" id="status-chip">✓ Situation maîtrisée</div>
+      <div class="status-level" id="status-level">Tout va bien</div>
+      <div class="status-meta" id="status-meta">Surveille et réévalue toutes les 15 min</div>
+    </div>
+    <div class="status-icon" id="status-icon">✓</div>
+  </div>
+  <div class="status-pills" id="status-pills"></div>
+</div>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main>
+
+<!-- ===== HYDRO ===== -->
+<section class="panel active" id="panel-hydro">
+  <div class="section-head">
+    <div class="section-title">Module Hydraulique</div>
+    <div class="section-sub">Eau · ARI · établissement</div>
+  </div>
+
+  <div class="quickstart">
+    <div class="qs-head">
+      <span class="qs-icon">🎯</span>
+      <span class="qs-title">Comment ça marche</span>
+    </div>
+    <ol class="qs-steps">
+      <li><strong>Renseigne le sinistre</strong> (surface en feu et type de bâtiment) — plus c'est gros, plus il faut d'eau.</li>
+      <li><strong>Indique tes moyens engagés</strong> (lances, ARI) — l'app compare aux besoins réels.</li>
+      <li><strong>Lis l'action en haut de l'écran</strong> — c'est ce que tu dois faire ou demander, en un coup d'œil.</li>
+    </ol>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏢</div>
+        <div>
+          <div class="card-title">Le sinistre</div>
+          <div class="card-desc">Quelle surface, quel bâtiment</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">
+            <span class="field-name">Surface qui brûle <span class="field-unit">m²</span></span>
+            <span class="field-value" id="lbl-surface">100</span>
+          </div>
+          <input type="range" id="surface" min="10" max="1000" step="10" value="100" oninput="ui.sync(this,'lbl-surface');engine.run()">
+          <div class="range-bounds"><span class="range-bound">10 m² (pièce)</span><span class="range-bound">1000 m² (entrepôt)</span></div>
+          <div class="field-help">Estime à vue d'œil la zone effectivement en flammes (pas tout le bâtiment).</div>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="field-name">Type de bâtiment</span></div>
+          <div class="segmented" id="seg-type">
+            <button class="seg-btn active" data-k="60">Habitation<small>maison, appart</small></button>
+            <button class="seg-btn" data-k="120">ERP<small>école, magasin</small></button>
+            <button class="seg-btn" data-k="240">Industriel<small>usine, dépôt</small></button>
+          </div>
+          <div class="field-help">Plus le bâtiment a de matières combustibles, plus il faut d'eau au m².</div>
+        </div>
+        <div class="field">
+          <div class="field-label">
+            <span class="field-name">Lances déjà en place <span class="field-unit">LDV 500 L/min</span></span>
+            <span class="field-value" id="lbl-lances">2</span>
+          </div>
+          <input type="range" id="lances" min="0" max="20" step="1" value="2" oninput="ui.sync(this,'lbl-lances');engine.run()">
+          <div class="range-bounds"><span class="range-bound">0</span><span class="range-bound">20</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🫁</div>
+        <div>
+          <div class="card-title">L'air des binômes (ARI)</div>
+          <div class="card-desc">Combien de temps avant relève</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">
+            <span class="field-name">Pression actuelle bouteille <span class="field-unit">bar</span></span>
+          </div>
+          <div class="input-pair">
+            <input type="range" id="pari" min="0" max="330" step="1" value="300" oninput="ui.sync(this);document.getElementById('num-pari').value=this.value;engine.run()">
+            <input type="number" id="num-pari" class="num-input" min="0" max="330" step="1" value="300"
+              oninput="document.getElementById('pari').value=this.value;ui.sync(document.getElementById('pari'));engine.run()">
+            <span class="input-suffix">bar</span>
+          </div>
+          <div class="range-bounds"><span class="range-bound">0 (vide)</span><span class="range-bound">330 (sur-pression)</span></div>
+          <div class="field-help">Lis le manomètre TPB. Tape la valeur exacte (ex. 217 bar) si besoin.</div>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="field-name">Type de bouteille</span></div>
+          <div class="segmented" id="seg-bottle">
+            <button class="seg-btn" data-vari="6">6 L<small>compact</small></button>
+            <button class="seg-btn" data-vari="6.8">6,8 L<small>composite SP</small></button>
+            <button class="seg-btn active" data-vari="9">9 L<small>standard</small></button>
+            <button class="seg-btn" data-vari="12">12 L<small>longue durée</small></button>
+          </div>
+          <div class="field-help">Standard actuel = 9 L composite. Le 6,8 L est plus léger.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">
+            <span class="field-name">Charge de travail du binôme</span>
+          </div>
+          <div class="segmented" id="seg-effort">
+            <button class="seg-btn" data-c="40">Calme<small>reco, attente</small></button>
+            <button class="seg-btn active" data-c="70">Soutenu<small>attaque normale</small></button>
+            <button class="seg-btn" data-c="100">Intense<small>sauvetage, lourd</small></button>
+          </div>
+          <div class="field-help">Plus le binôme respire fort, plus la bouteille se vide vite.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📐</div>
+      <div>
+        <div class="card-title">L'établissement (de la pompe à la lance)</div>
+        <div class="card-desc">Tuyaux · pression à régler</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <div class="field-label">
+          <span class="field-name">Distance pompe → lance <span class="field-unit">m</span></span>
+          <span class="field-value" id="lbl-distance">60</span>
+        </div>
+        <input type="range" id="distance" min="0" max="400" step="5" value="60" oninput="ui.sync(this,'lbl-distance');engine.run()">
+        <div class="range-bounds"><span class="range-bound">0 m (au pied)</span><span class="range-bound">400 m (loin)</span></div>
+        <div class="field-help">Longueur réelle des tuyaux à dérouler entre l'engin et le porte-lance.</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="field-name">Diamètre du tuyau d'alimentation</span></div>
+        <div class="segmented" id="seg-diam">
+          <button class="seg-btn active" data-diam="45" data-coef="0.04">⌀ 45 mm<small>standard</small></button>
+          <button class="seg-btn" data-diam="70" data-coef="0.005">⌀ 70 mm<small>gros débit / longue distance</small></button>
+        </div>
+        <div class="field-help">Le 70 perd 8× moins de pression que le 45. Indispensable au-delà de 100 m.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">
+          <span class="field-name">Pression voulue à la lance <span class="field-unit">bar</span></span>
+          <span class="field-value" id="lbl-plance">6</span>
+        </div>
+        <input type="range" id="plance" min="3" max="8" step="0.5" value="6" oninput="ui.sync(this,'lbl-plance');engine.run()">
+        <div class="range-bounds"><span class="range-bound">3 bar (faible)</span><span class="range-bound">8 bar (puissant)</span></div>
+        <div class="field-help">6 bar = pression standard d'attaque sur LDV moderne.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">
+          <span class="field-name">Hauteur lance vs engin <span class="field-unit">m</span></span>
+          <span class="field-value" id="lbl-deniv">0</span>
+        </div>
+        <input type="range" id="deniv" min="-20" max="60" step="1" value="0" oninput="ui.sync(this,'lbl-deniv');engine.run()">
+        <div class="range-bounds"><span class="range-bound">−20 m (sous-sol)</span><span class="range-bound">+60 m (R+20)</span></div>
+        <div class="field-help">Étage × 3 m. R+3 = +9 m. Sous-sol = nombre négatif.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">Résultat hydraulique</div>
+    <div class="section-sub">Engagement requis</div>
+  </div>
+  <div class="metric-grid">
+    <div class="metric" id="m-debit">
+      <div class="metric-label">Débit requis</div>
+      <div class="metric-value"><span id="v-debit">6000</span><span class="metric-unit">L/min</span></div>
+      <div class="metric-foot">≃ <span id="v-debit-m3">6.0</span> m³/min</div>
+    </div>
+    <div class="metric" id="m-lances">
+      <div class="metric-label">Lances minimum</div>
+      <div class="metric-value"><span id="v-nlances">12</span><span class="metric-unit">LDV</span></div>
+      <div class="metric-foot" id="v-lances-foot">12 LDV × 500 L/min</div>
+    </div>
+    <div class="metric" id="m-ari">
+      <div class="metric-label">Autonomie ARI</div>
+      <div class="metric-value"><span id="v-ari">32</span><span class="metric-unit">min</span></div>
+      <div class="metric-foot" id="v-ari-foot">Réserve 50 bar incluse</div>
+    </div>
+    <div class="metric" id="m-longueurs">
+      <div class="metric-label">Tuyaux à dérouler</div>
+      <div class="metric-value"><span id="v-nlongueurs">3</span><span class="metric-unit">long.</span></div>
+      <div class="metric-foot" id="v-longueurs-foot">3 × 20 m</div>
+    </div>
+    <div class="metric" id="m-ppompe">
+      <div class="metric-label">Pression pompe</div>
+      <div class="metric-value"><span id="v-ppompe">6.0</span><span class="metric-unit">bar</span></div>
+      <div class="metric-foot" id="v-ppompe-foot">P_lance + perte + Δh/10</div>
+    </div>
+    <div class="metric" id="m-faisable">
+      <div class="metric-label">Faisabilité</div>
+      <div class="metric-value"><span id="v-faisable">✓</span></div>
+      <div class="metric-foot" id="v-faisable-foot">Sous limite 16 bar pompe FPT</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NRBC ===== -->
+<section class="panel" id="panel-nrbc">
+  <div class="section-head">
+    <div class="section-title">Module NRBC</div>
+    <div class="section-sub">Pré-évaluation</div>
+  </div>
+
+  <div class="warn-strip warn-strip-strong" role="alert">
+    <span class="warn-strip-icon">☣</span>
+    <span><strong>Pré-évaluation uniquement.</strong> Le périmètre et le niveau EPI sont indicatifs. <u>Toujours confirmer</u> avec la fiche produit (transporteur), le CODIS et la cellule mobile d'intervention chimique (CMIC) avant engagement.</span>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">☣️</div>
+        <div>
+          <div class="card-title">Le produit en cause</div>
+          <div class="card-desc">Quelle dangerosité</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label"><span class="field-name">Niveau de danger du produit</span></div>
+          <div class="segmented" id="seg-danger">
+            <button class="seg-btn active" data-d="0" data-base="50">Faible<small>fioul, peinture</small></button>
+            <button class="seg-btn" data-d="1" data-base="100">Moyen<small>essence, GPL</small></button>
+            <button class="seg-btn" data-d="2" data-base="300">Fort<small>chlore, ammoniac</small></button>
+            <button class="seg-btn" data-d="3" data-base="800">Extrême<small>radio / inconnu</small></button>
+          </div>
+          <div class="field-help">Lis le pictogramme orange ou demande au transporteur si tu as un doute.</div>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="field-name">Force du vent</span></div>
+          <div class="segmented" id="seg-vent">
+            <button class="seg-btn active" data-v="1.0">Calme<small>fumée monte droit</small></button>
+            <button class="seg-btn" data-v="1.5">Moyen<small>les feuilles bougent</small></button>
+            <button class="seg-btn" data-v="2.0">Fort<small>branches s'agitent</small></button>
+          </div>
+          <div class="field-help">Plus le vent est fort, plus le nuage toxique se propage loin.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">👥</div>
+        <div>
+          <div class="card-title">Les gens exposés</div>
+          <div class="card-desc">Combien, où</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">
+            <span class="field-name">Victimes ou personnes exposées</span>
+            <span class="field-value" id="lbl-vicchim">0</span>
+          </div>
+          <input type="range" id="vicchim" min="0" max="50" step="1" value="0" oninput="ui.sync(this,'lbl-vicchim');engine.run()">
+          <div class="range-bounds"><span class="range-bound">0</span><span class="range-bound">50+</span></div>
+          <div class="field-help">Inclut les gens à évacuer, pas juste les blessés visibles.</div>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="field-name">Lieu de l'incident</span></div>
+          <div class="segmented" id="seg-prox">
+            <button class="seg-btn active" data-p="1">Isolé<small>champs, zone industrielle</small></button>
+            <button class="seg-btn" data-p="2">Habité<small>quartier, centre-ville</small></button>
+          </div>
+          <div class="field-help">En zone habitée, le périmètre d'évacuation double.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">Périmètre & EPI</div>
+    <div class="section-sub">Engagement</div>
+  </div>
+  <div class="metric-grid">
+    <div class="metric" id="m-perim">
+      <div class="metric-label">Évacuation initiale</div>
+      <div class="metric-value"><span id="v-perim">50</span><span class="metric-unit">m</span></div>
+      <div class="metric-foot">Base × vent · plancher 50 m</div>
+    </div>
+    <div class="metric" id="m-epi">
+      <div class="metric-label">Niveau EPI</div>
+      <div class="metric-value"><span id="v-epi">1</span></div>
+      <div class="metric-foot" id="v-epi-foot">Tenue de feu standard</div>
+    </div>
+    <div class="metric" id="m-scorenrbc">
+      <div class="metric-label">Score gravité</div>
+      <div class="metric-value"><span id="v-scorenrbc">0</span><span class="metric-unit">/12</span></div>
+      <div class="metric-foot" id="v-scorenrbc-foot">Faible</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NOVI ===== -->
+<section class="panel" id="panel-novi">
+  <div class="section-head">
+    <div class="section-title">Module Multi-victimes</div>
+    <div class="section-sub">Tri START · NOVI</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🚑</div>
+      <div>
+        <div class="card-title">Catégorisation des victimes</div>
+        <div class="card-desc">Comptage temps réel par catégorie</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="triage-grid">
+        <div class="triage-card UA">
+          <span class="triage-tag">UA</span>
+          <div class="triage-name">Urgence absolue</div>
+          <div class="triage-counter">
+            <div class="counter">
+              <button class="counter-btn" onclick="ui.dec('ua')">−</button>
+              <div class="counter-val" id="v-ua">0</div>
+              <button class="counter-btn" onclick="ui.inc('ua')">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="triage-card UR">
+          <span class="triage-tag">UR</span>
+          <div class="triage-name">Urgence relative</div>
+          <div class="triage-counter">
+            <div class="counter">
+              <button class="counter-btn" onclick="ui.dec('ur')">−</button>
+              <div class="counter-val" id="v-ur">0</div>
+              <button class="counter-btn" onclick="ui.inc('ur')">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="triage-card UI">
+          <span class="triage-tag">UI</span>
+          <div class="triage-name">Indemne</div>
+          <div class="triage-counter">
+            <div class="counter">
+              <button class="counter-btn" onclick="ui.dec('ui_')">−</button>
+              <div class="counter-val" id="v-ui_">0</div>
+              <button class="counter-btn" onclick="ui.inc('ui_')">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="triage-card UD">
+          <span class="triage-tag">UD</span>
+          <div class="triage-name">Décédé</div>
+          <div class="triage-counter">
+            <div class="counter">
+              <button class="counter-btn" onclick="ui.dec('ud')">−</button>
+              <div class="counter-val" id="v-ud">0</div>
+              <button class="counter-btn" onclick="ui.inc('ud')">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🚨</div>
+      <div>
+        <div class="card-title">Moyens disponibles sur zone</div>
+        <div class="card-desc">VSAV/AR engagés</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <div class="field-label">
+          <span class="field-name">Vecteurs sanitaires engagés</span>
+          <span class="field-value" id="lbl-vsav">0</span>
+        </div>
+        <input type="range" id="vsav" min="0" max="20" step="1" value="0" oninput="ui.sync(this,'lbl-vsav');engine.run()">
+        <div class="range-bounds"><span class="range-bound">0</span><span class="range-bound">20 VSAV/AR</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">Engagement requis</div>
+    <div class="section-sub">Doctrine NOVI</div>
+  </div>
+  <div class="metric-grid">
+    <div class="metric" id="m-vsav-req">
+      <div class="metric-label">VSAV requis</div>
+      <div class="metric-value"><span id="v-vsavreq">0</span></div>
+      <div class="metric-foot">UA × 1 + UR × 0.5</div>
+    </div>
+    <div class="metric" id="m-vict-tot">
+      <div class="metric-label">Victimes totales</div>
+      <div class="metric-value"><span id="v-victtot">0</span></div>
+      <div class="metric-foot" id="v-victtot-foot">UA + UR + UI + UD</div>
+    </div>
+    <div class="metric" id="m-ratio">
+      <div class="metric-label">Ratio engagement</div>
+      <div class="metric-value"><span id="v-ratio">∞</span></div>
+      <div class="metric-foot" id="v-ratio-foot">moyens / besoin</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SYNTHÈSE ===== -->
+<section class="panel" id="panel-synth">
+  <div class="section-head">
+    <div class="section-title">Synthèse opérationnelle</div>
+    <div class="section-sub">Recap & main courante</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📋</div>
+      <div style="flex:1">
+        <div class="card-title">Actions prioritaires</div>
+        <div class="card-desc">Selon état opérationnel</div>
+      </div>
+      <div class="export-buttons">
+        <button class="btn-ghost" onclick="exporter.bilanRadio()" title="Copier le SITREP">📻 Bilan radio</button>
+        <button class="btn-ghost" onclick="exporter.copyMainCourante()" title="Copier la main courante">📋 Copier MC</button>
+        <button class="btn-ghost" onclick="exporter.mainCourante()" title="Télécharger .txt">📥 Télécharger</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="action-list" id="actions"></div>
+      <div id="export-feedback" class="export-feedback" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📡</div>
+      <div>
+        <div class="card-title">Main courante (audit log)</div>
+        <div class="card-desc">Trace détaillée des calculs</div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:14px">
+      <div class="console" id="console"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">📖</div>
+      <div style="flex:1">
+        <div class="card-title">Hypothèses & doctrine utilisées</div>
+        <div class="card-desc">Toutes les formules et coefficients</div>
+      </div>
+      <button class="btn-ghost" onclick="ui.tab('doctrine')">Voir →</button>
+    </div>
+  </div>
+
+  <div class="foot-note">
+    <strong>Note d'usage.</strong> FireOps est un outil d'aide à la décision pédagogique. Les calculs reposent sur des hypothèses simplifiées inspirées du GNR/GTO/ERG 2024 et sont contrôlés par tests d'invariants (non certifié opérationnel). Cet outil ne remplace pas la doctrine COS/COSSIM, ni l'évaluation tactique du chef d'agrès.
+  </div>
+</section>
+
+<!-- ===== HYPOTHÈSES ===== -->
+<section class="panel" id="panel-doctrine">
+  <div class="section-head">
+    <div class="section-title">Hypothèses & doctrine</div>
+    <button class="btn-ghost" onclick="ui.tab('synth')">← Retour Synthèse</button>
+  </div>
+
+  <div class="warn-strip warn-strip-strong" role="alert">
+    <span class="warn-strip-icon">📖</span>
+    <span><strong>Toutes les formules et coefficients utilisés.</strong> Hypothèses pédagogiques inspirées (et simplifiées) de la doctrine sapeurs-pompiers ; ne constituent pas des seuils réglementaires ni des références exactes à citer.</span>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">💧</div>
+      <div>
+        <div class="card-title">Hydraulique</div>
+        <div class="card-desc">Débit, lances, pression pompe</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="doctrine-table">
+        <tr><th>Paramètre</th><th>Formule / valeur</th><th>Hypothèse pédagogique</th></tr>
+        <tr><td>Débit requis Q</td><td><code>surface × K</code></td><td>Inspiré méthode m² développé — valeur indicative</td></tr>
+        <tr><td>K — habitation</td><td><code>60 L/min/m²</code></td><td>Potentiel calorifique standard</td></tr>
+        <tr><td>K — ERP</td><td><code>120 L/min/m²</code></td><td>Charge calorifique élevée</td></tr>
+        <tr><td>K — industriel</td><td><code>240 L/min/m²</code></td><td>Charge calorifique très élevée</td></tr>
+        <tr><td>Capacité 1 LDV</td><td><code>500 L/min</code></td><td>Lance à débit variable, débit nominal</td></tr>
+        <tr><td>Nombre lances</td><td><code>⌈ Q / 500 ⌉</code></td><td>Arrondi supérieur</td></tr>
+        <tr><td>Longueur tuyau</td><td><code>20 m / longueur</code></td><td>Standard d'un tuyau de refoulement</td></tr>
+        <tr><td>Perte charge ⌀45</td><td><code>K=0.04</code></td><td>Hazen-Williams simplifié, Q nominal</td></tr>
+        <tr><td>Perte charge ⌀70</td><td><code>K=0.005</code></td><td>≈ 8× moins de perte qu'en ⌀45</td></tr>
+        <tr><td>Perte (bar)</td><td><code>K × L × (Q/500)²</code></td><td>Variation quadratique avec Q</td></tr>
+        <tr><td>Pression pompe</td><td><code>P_lance + perte + Δh/10</code></td><td>1 bar = 10 m de colonne d'eau</td></tr>
+        <tr><td>Limite pompe FPT</td><td><code>16 bar</code></td><td>Sécurité pompe / tuyaux</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🫁</div>
+      <div>
+        <div class="card-title">ARI — autonomie</div>
+        <div class="card-desc">Air sous pression</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="doctrine-table">
+        <tr><th>Paramètre</th><th>Formule / valeur</th><th>Hypothèse pédagogique</th></tr>
+        <tr><td>Autonomie</td><td><code>(P − 50) × V / conso</code></td><td>Loi de Boyle simplifiée</td></tr>
+        <tr><td>Réserve obligatoire</td><td><code>50 bar</code></td><td>Marge de sécurité (TPB)</td></tr>
+        <tr><td>Conso calme</td><td><code>40 L/min</code></td><td>Reconnaissance, attente</td></tr>
+        <tr><td>Conso soutenue</td><td><code>70 L/min</code></td><td>Attaque normale</td></tr>
+        <tr><td>Conso intense</td><td><code>100 L/min</code></td><td>Sauvetage, port de charge</td></tr>
+        <tr><td>Seuil critique</td><td><code>&lt; 10 min</code></td><td>Désengagement immédiat</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">☣</div>
+      <div>
+        <div class="card-title">NRBC — périmètre</div>
+        <div class="card-desc">Évacuation, EPI</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="doctrine-table">
+        <tr><th>Paramètre</th><th>Formule / valeur</th><th>Hypothèse pédagogique</th></tr>
+        <tr><td>Périmètre</td><td><code>max(50, base × vent)</code></td><td>ERG 2024 simplifié, plancher 50 m</td></tr>
+        <tr><td>Base — faible</td><td><code>50 m</code></td><td>Fioul, peinture</td></tr>
+        <tr><td>Base — moyen</td><td><code>100 m</code></td><td>Essence, GPL</td></tr>
+        <tr><td>Base — fort</td><td><code>300 m</code></td><td>Chlore, ammoniac</td></tr>
+        <tr><td>Base — extrême</td><td><code>800 m</code></td><td>Radioactif / inconnu</td></tr>
+        <tr><td>Vent calme</td><td><code>×1.0</code></td><td>Fumée monte droit</td></tr>
+        <tr><td>Vent moyen</td><td><code>×1.5</code></td><td>Feuilles bougent</td></tr>
+        <tr><td>Vent fort</td><td><code>×2.0</code></td><td>Branches s'agitent</td></tr>
+        <tr><td>Score gravité</td><td><code>danger × (1+vict/10) × prox</code></td><td>Indicateur composite simplifié</td></tr>
+        <tr><td>EPI — N1 à N4</td><td><code>0/1/2/3 → 1/2/3/4</code></td><td>Tenue feu → combinaison étanche</td></tr>
+      </table>
+      <div class="doctrine-warn">
+        ⚠ Toujours <strong>confirmer</strong> avec la fiche produit (transporteur), le CODIS et la CMIC avant engagement réel.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🚑</div>
+      <div>
+        <div class="card-title">Multi-victimes (NOVI)</div>
+        <div class="card-desc">Tri START, vecteurs</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="doctrine-table">
+        <tr><th>Paramètre</th><th>Formule / valeur</th><th>Hypothèse pédagogique</th></tr>
+        <tr><td>VSAV requis</td><td><code>⌈ UA × 1 + UR × 0,5 ⌉</code></td><td>1 UA = 1 vecteur, 1 UR = ½ vecteur</td></tr>
+        <tr><td>Catégories</td><td><code>UA / UR / UI / UD</code></td><td>Tri START — Urg. absolue / relative / indemne / décédé</td></tr>
+        <tr><td>Seuil Plan Rouge</td><td><code>UA ≥ 3</code> ou <code>UA+UR ≥ 5</code></td><td>Hypothèse de seuil — la décision réelle revient au COS</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon">🎯</div>
+      <div>
+        <div class="card-title">Synthèse globale</div>
+        <div class="card-desc">Niveau opérationnel</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="doctrine-table">
+        <tr><th>État</th><th>Condition</th><th>Action</th></tr>
+        <tr><td><span class="pill ok">NOMINAL</span></td><td>Tous modules : besoin ≤ moyens</td><td>Tenir, réévaluer toutes les 15 min</td></tr>
+        <tr><td><span class="pill warn">TENDU</span></td><td>Au moins 1 module : besoin &gt; moyens (≤ 1,5×)</td><td>Solliciter renforts standards</td></tr>
+        <tr><td><span class="pill alert">DÉPASSEMENT</span></td><td>Au moins 1 module : besoin &gt; 1,5× moyens, ou ARI &lt; 10 min, ou pompe &gt; 16 bar</td><td>Renforts massifs + alerte COS</td></tr>
+      </table>
+      <div class="doctrine-warn" style="background:var(--cyan-soft);color:var(--cyan)">
+        Règle de fusion : <strong>worst-case</strong> sur les 3 modules + 2 signaux critiques (ARI, faisabilité hydraulique).
+      </div>
+    </div>
+  </div>
+
+  <div class="foot-note" style="margin-top:8px">
+    <strong>Inspirations doctrinales (simplifiées).</strong> Les valeurs et formules s'inspirent librement de cadres comme le GNR, le GTO, l'ERG 2024 ou la méthode du m² développé, mais sans référence exacte à citer ; ce sont des <strong>hypothèses pédagogiques</strong>. La doctrine officielle prime toujours.
+  </div>
+</section>
+
+<!-- ===== SIM ===== -->
+<section class="panel" id="panel-sim">
+  <div class="section-head">
+    <div class="section-title">Simulations</div>
+    <div class="section-sub">Scénarios pré-configurés</div>
+  </div>
+
+  <div class="sim-grid">
+    <button class="sim-card crit" onclick="sim.run('appartement')">
+      <div class="sim-head">
+        <span class="sim-icon">🔥</span>
+        <span class="sim-title">Feu d'appartement</span>
+        <span class="sim-tag">DÉPASSÉ</span>
+      </div>
+      <div class="sim-desc">Habitation 80 m² embrasé · 3e étage · 2 victimes UR · 2 lances engagées · ARI 250 bar</div>
+    </button>
+    <button class="sim-card warn" onclick="sim.run('erp')">
+      <div class="sim-head">
+        <span class="sim-icon">🏬</span>
+        <span class="sim-title">Feu ERP</span>
+        <span class="sim-tag">TENDU</span>
+      </div>
+      <div class="sim-desc">Centre commercial 400 m² · vent modéré · 4 lances · 6 victimes UR à évacuer</div>
+    </button>
+    <button class="sim-card crit" onclick="sim.run('chimique')">
+      <div class="sim-head">
+        <span class="sim-icon">☠️</span>
+        <span class="sim-title">Camion-citerne renversé</span>
+        <span class="sim-tag">DÉPASSÉ</span>
+      </div>
+      <div class="sim-desc">Matière toxique classe 3 · vent fort · centre-ville · 12 victimes potentielles</div>
+    </button>
+    <button class="sim-card warn" onclick="sim.run('novi')">
+      <div class="sim-head">
+        <span class="sim-icon">🚌</span>
+        <span class="sim-title">Accident car · NOVI</span>
+        <span class="sim-tag">TENDU</span>
+      </div>
+      <div class="sim-desc">5 UA · 12 UR · 3 UI · 1 UD · 4 VSAV sur place</div>
+    </button>
+    <button class="sim-card ok" onclick="sim.run('reset')">
+      <div class="sim-head">
+        <span class="sim-icon">↺</span>
+        <span class="sim-title">Réinitialiser</span>
+        <span class="sim-tag">NOMINAL</span>
+      </div>
+      <div class="sim-desc">Remise à zéro de tous les paramètres et compteurs</div>
+    </button>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================
+     BOTTOM NAV
+     ============================================================ -->
+<div id="error-toast" class="error-toast" role="alert" aria-live="polite" style="display:none">
+  <span class="error-toast-icon">⚠</span>
+  <div class="error-toast-body">
+    <strong>Calcul invalide</strong>
+    <span id="error-toast-msg">Vérifie les valeurs saisies (négatives, hors bornes…)</span>
+  </div>
+  <button class="error-toast-close" onclick="document.getElementById('error-toast').style.display='none'" aria-label="Fermer">✕</button>
+</div>
+
+<nav class="bottom">
+  <button class="nav-btn active" data-tab="hydro" onclick="ui.tab('hydro')">
+    <span class="nav-icon">💧</span><span class="nav-label">Hydro</span>
+  </button>
+  <button class="nav-btn" data-tab="nrbc" onclick="ui.tab('nrbc')">
+    <span class="nav-icon">☣️</span><span class="nav-label">NRBC</span>
+  </button>
+  <button class="nav-btn" data-tab="novi" onclick="ui.tab('novi')">
+    <span class="nav-icon">🚑</span><span class="nav-label">Novi</span>
+  </button>
+  <button class="nav-btn" data-tab="synth" onclick="ui.tab('synth')">
+    <span class="nav-icon">📋</span><span class="nav-label">Synthèse</span>
+  </button>
+  <button class="nav-btn" data-tab="sim" onclick="ui.tab('sim')">
+    <span class="nav-icon">🎯</span><span class="nav-label">Sim</span>
+  </button>
+</nav>
+
+<script>
+/* ============================================================
+   EXPORTER — bilan radio (clipboard) + main courante (.txt)
+   ============================================================ */
+const exporter = {
+  // Format radio compact : phrase courte type SITREP pompiers
+  bilanRadio(){
+    const ts = new Date().toLocaleTimeString('fr-FR');
+    const s = state;
+    const e = exporter._snap();
+    const lvlMap = ['NOMINAL','TENDU','DÉPASSEMENT'];
+    const parts = [];
+    parts.push(`SITREP ${ts} - ${lvlMap[e.globalLvl]}`);
+    if(e.nlances > 0){
+      parts.push(`Hydro: ${e.debit} L/min, ${e.nlances} lances req. (${s.lances} engagées)`);
+    }
+    if(e.autonomie > 0 && e.autonomie < 30){
+      parts.push(`ARI: ${Math.floor(e.autonomie)} min restantes`);
+    }
+    if(e.victot > 0){
+      parts.push(`Vict: ${s.ua} UA, ${s.ur} UR, ${s.ui_} UI, ${s.ud} UD - ${e.vsavReq} VSAV req.`);
+    }
+    if(s.danger > 0){
+      parts.push(`NRBC: périm. ${Math.round(e.perim)}m, EPI N${e.epi.n}`);
+    }
+    if(e.actions.length > 0){
+      parts.push(`Action: ${e.actions[0]}`);
+    }
+    const txt = parts.join(' / ');
+    exporter._copy(txt, '✓ Bilan radio copié dans le presse-papier');
+  },
+
+  // Format texte de la main courante (utilisé par copy + download)
+  _formatMainCourante(){
+    const ts = new Date();
+    const s = state;
+    const e = exporter._snap();
+    const lvlMap = ['NOMINAL','TENDU','DÉPASSEMENT'];
+    const lines = [];
+    lines.push('====================================');
+    lines.push('  FireOps — Main courante');
+    lines.push('  ' + ts.toLocaleDateString('fr-FR') + ' ' + ts.toLocaleTimeString('fr-FR'));
+    lines.push('====================================');
+    lines.push('');
+    lines.push(`ÉTAT GLOBAL : ${lvlMap[e.globalLvl]}`);
+    if(e.actions.length > 0){
+      lines.push('Actions prioritaires :');
+      e.actions.forEach((a, i) => lines.push(`  ${i+1}. ${a}`));
+    }
+    lines.push('');
+    lines.push('-- HYDRAULIQUE --');
+    lines.push(`  Surface en feu     : ${s.surface} m² (${s.k===60?'habitation':s.k===120?'ERP':'industriel'})`);
+    lines.push(`  Débit requis       : ${e.debit.toLocaleString('fr-FR')} L/min`);
+    lines.push(`  Lances minimum     : ${e.nlances} (engagées : ${s.lances})`);
+    lines.push(`  Autonomie ARI      : ${e.autonomie.toFixed(1)} min`);
+    lines.push(`    (P=${s.pari} bar, V=${s.vari} L, conso=${s.conso} L/min)`);
+    lines.push(`  Établissement      : ${e.nlongueurs} long. ⌀${s.diam}mm`);
+    lines.push(`  Pression pompe     : ${e.ppompe.toFixed(1)} bar`);
+    lines.push(`  Faisable           : ${e.faisable?'OUI':'NON (>16 bar)'}`);
+    lines.push('');
+    lines.push('-- NRBC --');
+    const dgrLbl = ['Faible','Moyen','Fort','Extrême'][s.danger];
+    const ventLbl = s.vent===1?'Calme':s.vent===1.5?'Moyen':'Fort';
+    const proxLbl = s.prox===1?'Isolé':'Habité';
+    lines.push(`  Danger             : ${dgrLbl}`);
+    lines.push(`  Vent               : ${ventLbl}`);
+    lines.push(`  Lieu               : ${proxLbl}`);
+    lines.push(`  Victimes exposées  : ${s.vicchim}`);
+    lines.push(`  Périmètre évac.    : ${Math.round(e.perim)} m`);
+    lines.push(`  Niveau EPI         : ${e.epi.n} — ${e.epi.lbl}`);
+    lines.push(`  Score gravité      : ${e.scoreN.toFixed(2)}`);
+    lines.push('');
+    lines.push('-- MULTI-VICTIMES --');
+    lines.push(`  UA / UR / UI / UD  : ${s.ua} / ${s.ur} / ${s.ui_} / ${s.ud}`);
+    lines.push(`  Total victimes     : ${e.victot}`);
+    lines.push(`  VSAV requis        : ${e.vsavReq} (engagés : ${s.vsav})`);
+    lines.push('');
+    lines.push('====================================');
+    lines.push('Outil pédagogique — non certifié opérationnel');
+    lines.push('Calculs contrôlés par tests d\'invariants');
+    lines.push('====================================');
+    return {text: lines.join('\n'), ts};
+  },
+
+  // Copie main courante au clipboard (version mobile-friendly)
+  copyMainCourante(){
+    const {text} = exporter._formatMainCourante();
+    exporter._copy(text, '✓ Main courante copiée dans le presse-papier');
+  },
+
+  // Télécharge main courante en .txt
+  mainCourante(){
+    const {text, ts} = exporter._formatMainCourante();
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = ts.toISOString().replace(/[:.]/g,'-').slice(0,19);
+    a.href = url; a.download = `FireOps_main-courante_${stamp}.txt`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    exporter._feedback('✓ Main courante téléchargée');
+  },
+
+  _snap(){
+    // Recalcule à la volée (lecture seule du moteur)
+    const s = state;
+    const debit = engine.debit_requis(s.surface, s.k);
+    const nlances = engine.nb_lances(debit);
+    const autonomie = engine.autonomie_ari(s.pari, s.vari, 50, s.conso);
+    const debitParLance = nlances > 0 ? debit / nlances : 500;
+    const nlongueurs = engine.nb_longueurs(s.distance);
+    const perte = engine.perte_charge(debitParLance, s.distance, s.kperte);
+    const ppompe = engine.pression_pompe(s.plance, perte, s.deniv);
+    const faisable = engine.hydro_faisable(s.plance, perte, s.deniv);
+    const perim = engine.perim_evac(s.base, s.vent);
+    const epi = engine.niveauEPI(s.danger);
+    const scoreN = engine.score_nrbc(s.danger, s.vicchim, s.prox);
+    const victot = s.ua + s.ur + s.ui_ + s.ud;
+    const vsavReq = engine.vsav_requis(s.ua, s.ur);
+    const hydroNiv = engine.niveau_ops(nlances, s.lances);
+    const nrbcNiv = scoreN <= 1 ? 0 : scoreN <= 4 ? 1 : 2;
+    const noviNiv = vsavReq === 0 ? 0 : engine.niveau_ops(vsavReq, s.vsav);
+    const ariCrit = autonomie > 0 && autonomie < 10 ? 1 : 0;
+    const hydroBlock = (faisable === 0 && s.plance > 0) ? 1 : 0;
+    const globalLvl = Math.min(2, Math.max(0, Math.max(hydroNiv, nrbcNiv, noviNiv, ariCrit, hydroBlock)));
+    // Extract action titles from current rendered DOM (already built by render.actions)
+    const actions = Array.from(document.querySelectorAll('#actions .action-title'))
+      .map(el => el.textContent.trim());
+    return {debit, nlances, autonomie, nlongueurs, perte, ppompe, faisable, perim, epi, scoreN, victot, vsavReq, globalLvl, actions};
+  },
+
+  _copy(text, msg){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(
+        () => exporter._feedback(msg),
+        () => exporter._fallback(text, msg)
+      );
+    } else {
+      exporter._fallback(text, msg);
+    }
+  },
+  _fallback(text, msg){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); exporter._feedback(msg); }
+    catch(e){ exporter._feedback('⚠ Copie non supportée — texte : ' + text.slice(0,80)+'…'); }
+    document.body.removeChild(ta);
+  },
+  _feedback(msg){
+    const el = document.getElementById('export-feedback');
+    if(!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(exporter._t);
+    exporter._t = setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  surface: 100, k: 60, lances: 2,
+  pari: 300, vari: 9, conso: 70,
+  distance: 60, diam: 45, kperte: 0.04, plance: 6, deniv: 0,
+  danger: 0, base: 50, vent: 1.0, vicchim: 0, prox: 1,
+  ua: 0, ur: 0, ui_: 0, ud: 0, vsav: 0
+};
+
+/* ============================================================
+   ENGINE — pure functions, mirror of verified formal spec
+   ============================================================ */
+const engine = {
+  _check(cond, msg){ if(!cond) throw new Error('Invariant: '+msg); },
+
+  // @invariant-tested : (* surface k), result ∈ [0, 100000]
+  debit_requis(surface, k){
+    const q = surface * k;
+    this._check(q >= 0 && q <= 100000, 'debit_requis hors bornes');
+    return q;
+  },
+
+  // @invariant-tested : ceil(q/500), >= 0
+  nb_lances(debit){
+    if(debit <= 0) return 0;
+    const n = Math.ceil(debit / 500);
+    this._check(n >= 0, 'nb_lances négatif');
+    return n;
+  },
+
+  // @invariant-tested : ((P-Pres)*V)/conso, >= 0
+  // Clamp défensif (counter_example: négatifs)
+  autonomie_ari(pression, volume, preserve, conso){
+    pression = Math.max(0, pression);
+    volume   = Math.max(0, volume);
+    preserve = Math.max(0, preserve);
+    conso    = Math.max(0, conso);
+    if(pression <= preserve || conso <= 0) return 0;
+    const t = ((pression - preserve) * volume) / conso;
+    this._check(t >= 0, 'autonomie négative');
+    return t;
+  },
+
+  // @invariant-tested : max(50, base*vent), result >= 50
+  perim_evac(base, vent){
+    const p = Math.max(50, base * vent);
+    this._check(p >= 50, 'perim < 50m');
+    return p;
+  },
+
+  // @invariant-tested : danger * (1 + vic/10) * prox
+  score_nrbc(danger, victimes, prox){
+    const s = danger * (1 + victimes/10) * prox;
+    this._check(s >= 0, 'score_nrbc négatif');
+    return s;
+  },
+
+  // @invariant-tested : ceil(ua + ur/2), >= 0
+  // Clamp défensif (counter_example: UR négatifs)
+  vsav_requis(ua, ur){
+    ua = Math.max(0, ua);
+    ur = Math.max(0, ur);
+    const n = Math.ceil(ua + ur/2);
+    this._check(n >= 0, 'vsav_requis négatif');
+    return n;
+  },
+
+  // @invariant-tested : ⌈distance/20⌉
+  nb_longueurs(distance){
+    const d = Math.max(0, distance);
+    if(d <= 0) return 0;
+    const n = Math.ceil(d / 20);
+    this._check(n >= 0, 'nb_longueurs négatif');
+    return n;
+  },
+
+  // @invariant-tested : K × L × (Q/500)² — Hazen-Williams simplifié
+  perte_charge(debit, longueur, k){
+    const q = Math.max(0, debit);
+    const l = Math.max(0, longueur);
+    const kk = Math.max(0, k);
+    const qn = q / 500;
+    const p = kk * l * qn * qn;
+    this._check(p >= 0, 'perte_charge négative');
+    return p;
+  },
+
+  // @invariant-tested : P_lance + perte + Δh/10, clampé [0, 16]
+  pression_pompe(p_lance, perte, denivele){
+    const p = Math.max(0, p_lance);
+    const pe = Math.max(0, perte);
+    const dh = denivele / 10;
+    const raw = p + pe + dh;
+    const result = Math.min(16, Math.max(0, raw));
+    this._check(result >= 0 && result <= 16, 'pression_pompe hors bornes');
+    return result;
+  },
+
+  // @invariant-tested : 1 si pression brute ≤ 16 bar ET P_lance > 0
+  hydro_faisable(p_lance, perte, denivele){
+    if(p_lance <= 0) return 0;
+    const raw = p_lance + Math.max(0, perte) + denivele/10;
+    return raw > 16 ? 0 : 1;
+  },
+
+  // @invariant-tested : 0=NOMINAL, 1=TENDU, 2=DÉPASSÉ
+  niveau_ops(besoin, moyens){
+    if(besoin <= 0) return 0;
+    if(moyens <= 0) return 2;
+    if(besoin <= moyens) return 0;
+    if(besoin <= moyens * 1.5) return 1;
+    return 2;
+  },
+
+  niveauEPI(danger){
+    if(danger <= 0) return {n:1, lbl:'Tenue de feu standard'};
+    if(danger === 1) return {n:2, lbl:'Tenue de feu + ARI'};
+    if(danger === 2) return {n:3, lbl:'TLD + ARI · décontamination'};
+    return {n:4, lbl:'Combinaison étanche · binôme reco SR'};
+  },
+
+  // ============================================================
+  // RUN — orchestrate, render, log
+  // ============================================================
+  run(){
+    try {
+      this._run();
+      const t = document.getElementById('error-toast');
+      if(t && t.style.display !== 'none') t.style.display = 'none';
+    } catch(err) {
+      console.error('engine.run failed:', err);
+      const t = document.getElementById('error-toast');
+      const m = document.getElementById('error-toast-msg');
+      if(t && m){
+        m.textContent = String(err.message || err).slice(0, 140);
+        t.style.display = 'flex';
+      }
+    }
+  },
+
+  _run(){
+    const s = state;
+
+    // HYDRO
+    const debit = this.debit_requis(s.surface, s.k);
+    const nlances = this.nb_lances(debit);
+    const autonomie = this.autonomie_ari(s.pari, s.vari, 50, s.conso);
+    // Établissement (par lance — débit unitaire 500 L/min de référence)
+    const debitParLance = nlances > 0 ? debit / nlances : 500;
+    const nlongueurs = this.nb_longueurs(s.distance);
+    const perte = this.perte_charge(debitParLance, s.distance, s.kperte);
+    const ppompe = this.pression_pompe(s.plance, perte, s.deniv);
+    const faisable = this.hydro_faisable(s.plance, perte, s.deniv);
+
+    // NRBC
+    const perim = this.perim_evac(s.base, s.vent);
+    const epi = this.niveauEPI(s.danger);
+    const scoreN = this.score_nrbc(s.danger, s.vicchim, s.prox);
+
+    // NOVI
+    const victot = s.ua + s.ur + s.ui_ + s.ud;
+    const vsavReq = this.vsav_requis(s.ua, s.ur);
+
+    // GLOBAL — combine signals (worst-case)
+    const hydroNiv = this.niveau_ops(nlances, s.lances);
+    const nrbcNiv = scoreN <= 1 ? 0 : scoreN <= 4 ? 1 : 2;
+    const noviNiv = vsavReq === 0 ? 0 : this.niveau_ops(vsavReq, s.vsav);
+    const ariCrit = autonomie > 0 && autonomie < 10 ? 1 : 0;
+    // Faisabilité hydraulique = signal supplémentaire pour la synthèse
+    const hydroBlock = (faisable === 0 && s.plance > 0) ? 1 : 0;
+    // Synthèse worst-case + clamp défensif [0,2]
+    const globalLvl = Math.min(2, Math.max(0, Math.max(hydroNiv, nrbcNiv, noviNiv, ariCrit, hydroBlock)));
+    this._check(globalLvl >= 0 && globalLvl <= 2, 'globalLvl hors bornes');
+
+    const reasons = [];
+    if(hydroNiv===2) reasons.push({txt:'lances insuffisantes', lvl:'alert'});
+    else if(hydroNiv===1) reasons.push({txt:'lances tendues', lvl:'warn'});
+    if(nrbcNiv===2) reasons.push({txt:'gravité NRBC élevée', lvl:'alert'});
+    else if(nrbcNiv===1) reasons.push({txt:'NRBC à surveiller', lvl:'warn'});
+    if(noviNiv===2) reasons.push({txt:'VSAV insuffisants', lvl:'alert'});
+    else if(noviNiv===1) reasons.push({txt:'VSAV tendus', lvl:'warn'});
+    if(ariCrit) reasons.push({txt:'ARI < 10 min', lvl:'alert'});
+    if(hydroBlock) reasons.push({txt:'pression pompe > 16 bar', lvl:'alert'});
+    if(s.danger>=2 && s.vent>=1.5) reasons.push({txt:'vent + toxicité', lvl:'warn'});
+    if(reasons.length===0) reasons.push({txt:'situation maîtrisée', lvl:'ok'});
+
+    // Render everything
+    render.hydro({debit, nlances, autonomie, nlongueurs, perte, ppompe, faisable, debitParLance});
+    render.nrbc({perim, epi, scoreN});
+    render.novi({victot, vsavReq});
+    render.global({globalLvl, reasons,
+      hydroNiv, nrbcNiv, noviNiv,
+      debit, nlances, autonomie, perim, epi, scoreN, vsavReq, victot
+    });
+    render.actions(globalLvl, {hydroNiv, nrbcNiv, noviNiv, ariCrit, autonomie, scoreN, vsavReq, s});
+    render.console({debit, nlances, autonomie, nlongueurs, perte, ppompe, faisable, debitParLance, perim, epi, scoreN, vsavReq, victot, globalLvl, reasons});
+  }
+};
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const render = {
+  hydro({debit, nlances, autonomie, nlongueurs, perte, ppompe, faisable, debitParLance}){
+    document.getElementById('v-debit').textContent = debit.toLocaleString('fr-FR');
+    document.getElementById('v-debit-m3').textContent = (debit/1000).toFixed(1);
+
+    document.getElementById('v-nlances').textContent = nlances;
+    const okL = nlances <= state.lances;
+    document.getElementById('m-lances').className = 'metric ' + (okL ? 'ok' : (nlances <= state.lances*1.5 ? 'warn' : 'alert'));
+    document.getElementById('v-lances-foot').textContent = state.lances + ' LDV engagées · ' + nlances + ' requises';
+
+    const ari = autonomie;
+    document.getElementById('v-ari').textContent = ari > 0 ? Math.floor(ari) : 0;
+    let ariCls = 'ok';
+    if(ari < 10) ariCls = 'alert';
+    else if(ari < 20) ariCls = 'warn';
+    document.getElementById('m-ari').className = 'metric ' + ariCls;
+    document.getElementById('v-ari-foot').textContent = ari < 10 ? '⚠ Désengagement imminent' : ari < 20 ? 'Surveiller TPB' : 'Réserve confortable';
+
+    // Tuyaux à dérouler
+    document.getElementById('v-nlongueurs').textContent = nlongueurs;
+    document.getElementById('v-longueurs-foot').textContent = nlongueurs > 0 ? `${nlongueurs} × 20 m = ${nlongueurs*20} m` : 'Lance au pied de l\'engin';
+    document.getElementById('m-longueurs').className = 'metric ' + (nlongueurs > 10 ? 'warn' : 'ok');
+
+    // Pression pompe
+    document.getElementById('v-ppompe').textContent = ppompe.toFixed(1);
+    let pCls = 'ok';
+    if(ppompe >= 14) pCls = 'alert';
+    else if(ppompe >= 10) pCls = 'warn';
+    document.getElementById('m-ppompe').className = 'metric ' + pCls;
+    document.getElementById('v-ppompe-foot').textContent =
+      `${state.plance.toFixed(1)} + ${perte.toFixed(1)} + ${(state.deniv/10).toFixed(1)} bar`;
+
+    // Faisabilité
+    const fEl = document.getElementById('v-faisable');
+    fEl.textContent = faisable ? '✓' : '✗';
+    document.getElementById('m-faisable').className = 'metric ' + (faisable ? 'ok' : 'alert');
+    document.getElementById('v-faisable-foot').textContent = faisable
+      ? `OK · débit ${Math.round(debitParLance)} L/min/lance`
+      : '⚠ Au-dessus 16 bar — passer en ⌀ 70 ou réduire distance';
+  },
+
+  nrbc({perim, epi, scoreN}){
+    document.getElementById('v-perim').textContent = Math.round(perim);
+    document.getElementById('m-perim').className = 'metric ' + (perim >= 300 ? 'alert' : perim >= 100 ? 'warn' : 'ok');
+
+    document.getElementById('v-epi').textContent = epi.n;
+    document.getElementById('v-epi-foot').textContent = epi.lbl;
+    document.getElementById('m-epi').className = 'metric ' + (epi.n >= 3 ? 'alert' : epi.n >= 2 ? 'warn' : 'ok');
+
+    document.getElementById('v-scorenrbc').textContent = scoreN.toFixed(1);
+    const lbl = scoreN <= 1 ? 'Faible' : scoreN <= 4 ? 'Modéré' : scoreN <= 8 ? 'Élevé' : 'Extrême';
+    document.getElementById('v-scorenrbc-foot').textContent = lbl;
+    document.getElementById('m-scorenrbc').className = 'metric ' + (scoreN > 4 ? 'alert' : scoreN > 1 ? 'warn' : 'ok');
+  },
+
+  novi({victot, vsavReq}){
+    document.getElementById('v-vsavreq').textContent = vsavReq;
+    document.getElementById('v-victtot').textContent = victot;
+    document.getElementById('v-victtot-foot').textContent =
+      `UA=${state.ua} · UR=${state.ur} · UI=${state.ui_} · UD=${state.ud}`;
+    document.getElementById('m-vict-tot').className = 'metric ' + (victot >= 10 ? 'alert' : victot >= 5 ? 'warn' : victot > 0 ? 'ok' : '');
+
+    const ratio = vsavReq === 0 ? Infinity : state.vsav / vsavReq;
+    const ratioStr = vsavReq === 0 ? '—' : (ratio >= 10 ? '≥10' : ratio.toFixed(1));
+    document.getElementById('v-ratio').textContent = ratioStr;
+    let rCls = '';
+    if(vsavReq > 0){
+      if(ratio < 1) rCls = 'alert';
+      else if(ratio < 1.5) rCls = 'warn';
+      else rCls = 'ok';
+    }
+    document.getElementById('m-ratio').className = 'metric ' + rCls;
+    document.getElementById('v-ratio-foot').textContent =
+      vsavReq === 0 ? 'Aucun engagement requis' :
+      ratio >= 1 ? `${state.vsav} engagés / ${vsavReq} requis` :
+      `Manque ${vsavReq - state.vsav} VSAV`;
+    document.getElementById('m-vsav-req').className = 'metric ' + (vsavReq >= 5 ? 'alert' : vsavReq >= 2 ? 'warn' : vsavReq > 0 ? 'ok' : '');
+  },
+
+  global(ctx){
+    const {globalLvl, reasons, debit, nlances, autonomie, perim, scoreN, vsavReq, victot} = ctx;
+    const s = state;
+    const banner = document.getElementById('status-banner');
+    const chip = document.getElementById('status-chip');
+    const lvl = document.getElementById('status-level');
+    const meta = document.getElementById('status-meta');
+    const icon = document.getElementById('status-icon');
+    const pills = document.getElementById('status-pills');
+
+    // Chip = état (petit, en haut)
+    const chipMap = [
+      {cls:'NOMINAL', txt:'✓ Situation maîtrisée'},
+      {cls:'TENDU',   txt:'⚠ Situation tendue'},
+      {cls:'DEPASSE', txt:'⚡ Situation dépassée'}
+    ];
+    chip.textContent = chipMap[globalLvl].txt;
+
+    // ACTION = ce qu'il faut faire MAINTENANT (gros, en avant)
+    const actions = [];
+    if(nlances > s.lances){
+      const manque = nlances - s.lances;
+      actions.push({prio:2, txt:`Demande ${manque} lance${manque>1?'s':''} en plus`, sub:`${nlances} lances nécessaires, ${s.lances} en place`});
+    }
+    if(autonomie > 0 && autonomie < 10){
+      actions.push({prio:2, txt:`Relève binôme ARI immédiate`, sub:`Plus que ${Math.floor(autonomie)} min d'air`});
+    }
+    if(vsavReq > s.vsav && vsavReq > 0){
+      const m = vsavReq - s.vsav;
+      actions.push({prio:2, txt:`Demande ${m} VSAV/AR en plus`, sub:`${victot} victimes au total`});
+    }
+    if(scoreN > 4){
+      actions.push({prio:2, txt:`Périmètre ${Math.round(perim)} m + EPI niveau 4`, sub:`Risque chimique élevé`});
+    } else if(scoreN > 1){
+      actions.push({prio:1, txt:`Établis périmètre ${Math.round(perim)} m`, sub:`Vent + produit dangereux`});
+    }
+    if(autonomie >= 10 && autonomie < 20){
+      actions.push({prio:1, txt:`Prépare la relève binôme`, sub:`${Math.floor(autonomie)} min d'air restantes`});
+    }
+    if(s.ua >= 3){
+      actions.push({prio:2, txt:`Active SINUS / Plan Rouge`, sub:`${s.ua} urgences absolues`});
+    }
+    actions.sort((a,b) => b.prio - a.prio);
+
+    let topAction, topSub;
+    if(globalLvl === 0 && actions.length === 0){
+      topAction = 'Tout va bien';
+      topSub = 'Surveille et réévalue toutes les 15 min';
+      icon.textContent = '✓';
+    } else if(actions.length > 0){
+      topAction = actions[0].txt;
+      topSub = actions[0].sub;
+      icon.textContent = globalLvl === 2 ? '⚡' : '⚠';
+    } else {
+      topAction = globalLvl === 1 ? 'Anticipe les renforts' : 'Demande renforts massifs';
+      topSub = globalLvl === 2 ? 'Alerte COS — moyens dépassés' : 'Renforts standards à demander';
+      icon.textContent = globalLvl === 2 ? '⚡' : '⚠';
+    }
+
+    banner.className = 'status-banner ' + chipMap[globalLvl].cls;
+    lvl.textContent = topAction;
+    lvl.className = 'status-level action';
+    meta.textContent = topSub;
+
+    // Pills = causes secondaires
+    pills.innerHTML = reasons.map(r =>
+      `<span class="pill ${r.lvl}">${r.txt}</span>`
+    ).join('');
+  },
+
+  actions(globalLvl, ctx){
+    const acts = [];
+    const {ariCrit, autonomie, scoreN, vsavReq, hydroNiv, nrbcNiv, noviNiv, s} = ctx;
+
+    if(globalLvl === 2){
+      acts.push({lvl:'alert', t:'Demander renforts massifs', d:'Information COS — déclenchement plan ORSEC si critères'});
+    } else if(globalLvl === 1){
+      acts.push({lvl:'warn', t:'Solliciter renforts standards', d:'Anticiper la montée en puissance par binômes/lances supplémentaires'});
+    } else {
+      acts.push({lvl:'ok', t:'Tenir la situation', d:'Maintenir vigilance · réévaluer toutes les 15 min'});
+    }
+
+    if(ariCrit){
+      acts.push({lvl:'alert', t:'Désengagement ARI imminent', d:`Autonomie < 10 min — préparer relève binôme reco`});
+    } else if(autonomie > 0 && autonomie < 20){
+      acts.push({lvl:'warn', t:'Surveiller TPB (témoin pression bouteille)', d:'Préparer la relève dans les 10 minutes'});
+    }
+
+    if(hydroNiv >= 1){
+      acts.push({lvl: hydroNiv===2?'alert':'warn', t:'Augmenter dispositif hydraulique', d:`Engager ${Math.max(0, ctx.s ? engine.nb_lances(ctx.s.surface*ctx.s.k) - ctx.s.lances : 0)} lance(s) supplémentaire(s)`});
+    }
+
+    if(nrbcNiv >= 1){
+      const epi = engine.niveauEPI(s.danger);
+      acts.push({lvl: nrbcNiv===2?'alert':'warn', t:`EPI niveau ${epi.n}`, d:epi.lbl});
+      if(s.vent >= 1.5){
+        acts.push({lvl:'warn', t:'Reconnaissance amont du vent', d:'Adapter le périmètre côté sous-vent — anticiper évacuation'});
+      }
+    }
+
+    if(noviNiv >= 1){
+      acts.push({lvl: noviNiv===2?'alert':'warn', t:`Demander ${Math.max(0,vsavReq - s.vsav)} VSAV/AR`, d:'Mise en place PMA · transmettre bilan SAMU'});
+    }
+
+    if(s.ua >= 3 || s.ur + s.ua >= 5){
+      acts.push({lvl:'alert', t:'Activer SINUS / Plan Rouge', d:'Déclenchement officier santé · structuration site'});
+    }
+
+    document.getElementById('actions').innerHTML = acts.map((a,i) =>
+      `<div class="action-item ${a.lvl}">
+        <div class="action-num">${i+1}</div>
+        <div class="action-text">
+          <div class="action-title">${a.t}</div>
+          <div class="action-desc">${a.d}</div>
+        </div>
+      </div>`).join('');
+  },
+
+  console(d){
+    const lines = [];
+    const ts = new Date().toLocaleTimeString('fr-FR');
+    lines.push(`<div class="log-meta">// FireOps — Calcul ${ts} — Contrôlé par tests d'invariants</div>`);
+
+    lines.push(`<div class="log-title">[HYDRAULIQUE]</div>`);
+    lines.push(`<div class="log-line">  surface=${state.surface} m² · K=${state.k} L/min/m²</div>`);
+    lines.push(`<div class="log-line">  Q = ${state.surface} × ${state.k} = <span class="log-ok">${d.debit.toLocaleString('fr-FR')} L/min</span></div>`);
+    lines.push(`<div class="log-line">  ⌈${d.debit}/500⌉ = <span class="log-ok">${d.nlances} LDV</span> (engagées: ${state.lances})</div>`);
+    lines.push(`<div class="log-line">  ARI: (${state.pari}-50)×${state.vari}/${state.conso} = <span class="${d.autonomie<10?'log-alert':d.autonomie<20?'log-warn':'log-ok'}">${d.autonomie.toFixed(1)} min</span></div>`);
+    lines.push(`<div class="log-total">  TOTAL : besoin ${d.nlances} lances · ${d.autonomie.toFixed(0)} min ARI</div>`);
+
+    lines.push(`<div class="log-title">[ÉTABLISSEMENT]</div>`);
+    lines.push(`<div class="log-line">  distance=${state.distance}m · ⌀${state.diam}mm (k=${state.kperte})</div>`);
+    lines.push(`<div class="log-line">  longueurs = ⌈${state.distance}/20⌉ = <span class="log-ok">${d.nlongueurs}</span></div>`);
+    const dpl = d.debitParLance || 500;
+    lines.push(`<div class="log-line">  perte = ${state.kperte}×${state.distance}×(${Math.round(dpl)}/500)² = <span class="${d.perte>5?'log-alert':d.perte>2?'log-warn':'log-ok'}">${d.perte.toFixed(2)} bar</span></div>`);
+    lines.push(`<div class="log-line">  P_pompe = ${state.plance}+${d.perte.toFixed(1)}+${(state.deniv/10).toFixed(1)} = <span class="${d.ppompe>=14?'log-alert':d.ppompe>=10?'log-warn':'log-ok'}">${d.ppompe.toFixed(1)} bar</span></div>`);
+    lines.push(`<div class="log-line">  faisable: <span class="${d.faisable?'log-ok':'log-alert'}">${d.faisable?'OUI':'NON (>16 bar)'}</span></div>`);
+    lines.push(`<div class="log-total">  TOTAL : ${d.nlongueurs} long. · pompe ${d.ppompe.toFixed(1)} bar</div>`);
+
+    lines.push(`<div class="log-title">[NRBC]</div>`);
+    lines.push(`<div class="log-line">  base=${state.base}m · vent×${state.vent}</div>`);
+    lines.push(`<div class="log-line">  périmètre = max(50, ${state.base}×${state.vent}) = <span class="${d.perim>=300?'log-alert':d.perim>=100?'log-warn':'log-ok'}">${Math.round(d.perim)} m</span></div>`);
+    lines.push(`<div class="log-line">  EPI niveau <span class="${d.epi.n>=3?'log-alert':d.epi.n>=2?'log-warn':'log-ok'}">${d.epi.n}</span> — ${d.epi.lbl}</div>`);
+    lines.push(`<div class="log-line">  score = ${state.danger}×(1+${state.vicchim}/10)×${state.prox} = <span class="${d.scoreN>4?'log-alert':d.scoreN>1?'log-warn':'log-ok'}">${d.scoreN.toFixed(2)}</span></div>`);
+    lines.push(`<div class="log-total">  TOTAL : ${Math.round(d.perim)}m · EPI N${d.epi.n} · gravité ${d.scoreN.toFixed(1)}</div>`);
+
+    lines.push(`<div class="log-title">[MULTI-VICTIMES]</div>`);
+    lines.push(`<div class="log-line">  UA=${state.ua} UR=${state.ur} UI=${state.ui_} UD=${state.ud} → total ${d.victot}</div>`);
+    lines.push(`<div class="log-line">  VSAV requis = ⌈${state.ua}+${state.ur}/2⌉ = <span class="${d.vsavReq>state.vsav?'log-alert':'log-ok'}">${d.vsavReq}</span> (engagés: ${state.vsav})</div>`);
+    lines.push(`<div class="log-total">  TOTAL : ${d.victot} victimes · ${d.vsavReq} vecteurs requis</div>`);
+
+    lines.push(`<div class="log-title">[SYNTHÈSE]</div>`);
+    const lvlMap = ['NOMINAL','TENDU','DÉPASSEMENT'];
+    const lvlCls = ['log-ok','log-warn','log-alert'];
+    lines.push(`<div class="log-line">  niveau_ops = <span class="${lvlCls[d.globalLvl]}">${lvlMap[d.globalLvl]}</span></div>`);
+    lines.push(`<div class="log-line">  raisons : ${d.reasons.map(r=>r.txt).join(' · ')}</div>`);
+
+    document.getElementById('console').innerHTML = lines.join('');
+  }
+};
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+const ui = {
+  sync(el, lblId){
+    const pct = ((+el.value - +el.min) / (+el.max - +el.min)) * 100;
+    el.style.setProperty('--pct', pct+'%');
+    const lbl = lblId ? document.getElementById(lblId) : null;
+    if(lbl) lbl.textContent = el.value;
+    const id = el.id;
+    if(id === 'surface') state.surface = +el.value;
+    if(id === 'lances')  state.lances  = +el.value;
+    if(id === 'pari')    state.pari    = +el.value;
+    if(id === 'vicchim') state.vicchim = +el.value;
+    if(id === 'vsav')    state.vsav    = +el.value;
+    if(id === 'distance') state.distance = +el.value;
+    if(id === 'plance')  state.plance  = +el.value;
+    if(id === 'deniv')   state.deniv   = +el.value;
+  },
+  tab(name){
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-'+name).classList.add('active');
+    document.querySelector(`.nav-btn[data-tab="${name}"]`).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  },
+  inc(k){ state[k] = Math.min(999, state[k]+1); document.getElementById('v-'+k).textContent = state[k]; engine.run(); },
+  dec(k){ state[k] = Math.max(0, state[k]-1); document.getElementById('v-'+k).textContent = state[k]; engine.run(); },
+
+  segGroup(containerId, attrSetters){
+    const cont = document.getElementById(containerId);
+    cont.querySelectorAll('.seg-btn').forEach(b => b.addEventListener('click', () => {
+      cont.querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      attrSetters(b);
+      engine.run();
+    }));
+  }
+};
+
+/* ============================================================
+   SIMULATIONS
+   ============================================================ */
+const sim = {
+  run(name){
+    const presets = {
+      reset:       {surface:100, k:60,  lances:2, pari:300, vari:9, conso:70,  distance:60, diam:45, kperte:0.04, plance:6, deniv:0,  danger:0, base:50,  vent:1.0, vicchim:0,  prox:1, ua:0, ur:0, ui_:0, ud:0, vsav:0, tab:'hydro'},
+      appartement: {surface:80,  k:60,  lances:2, pari:250, vari:9, conso:100, distance:80, diam:45, kperte:0.04, plance:6, deniv:9,  danger:0, base:50,  vent:1.0, vicchim:2,  prox:2, ua:0, ur:2, ui_:1, ud:0, vsav:1, tab:'synth'},
+      erp:         {surface:400, k:120, lances:4, pari:300, vari:9, conso:70,  distance:120,diam:70, kperte:0.005,plance:6, deniv:0,  danger:0, base:50,  vent:1.5, vicchim:6,  prox:2, ua:1, ur:5, ui_:8, ud:0, vsav:3, tab:'synth'},
+      chimique:    {surface:50,  k:60,  lances:2, pari:300, vari:9, conso:70,  distance:200,diam:70, kperte:0.005,plance:6, deniv:0,  danger:3, base:800, vent:2.0, vicchim:12, prox:2, ua:3, ur:5, ui_:4, ud:0, vsav:2, tab:'synth'},
+      novi:        {surface:50,  k:60,  lances:0, pari:300, vari:9, conso:70,  distance:60, diam:45, kperte:0.04, plance:6, deniv:0,  danger:0, base:50,  vent:1.0, vicchim:0,  prox:1, ua:5, ur:12, ui_:3, ud:1, vsav:4, tab:'synth'}
+    };
+    const p = presets[name];
+    if(!p) return;
+    Object.assign(state, p);
+
+    // Sync sliders
+    ['surface','lances','pari','vicchim','vsav','distance','plance','deniv'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el){ el.value = state[id]; ui.sync(el, 'lbl-'+id); }
+    });
+    // Sync numeric input mirror
+    const nPari = document.getElementById('num-pari');
+    if(nPari) nPari.value = state.pari;
+    // Sync segments
+    sim.activate('seg-type', `[data-k="${state.k}"]`);
+    sim.activate('seg-effort', `[data-c="${state.conso}"]`);
+    sim.activate('seg-bottle', `[data-vari="${state.vari}"]`);
+    sim.activate('seg-diam', `[data-diam="${state.diam}"]`);
+    sim.activate('seg-danger', `[data-d="${state.danger}"]`);
+    sim.activate('seg-vent', `[data-v="${state.vent.toFixed(1)}"]`);
+    sim.activate('seg-prox', `[data-p="${state.prox}"]`);
+    // Sync counters
+    ['ua','ur','ui_','ud'].forEach(k => document.getElementById('v-'+k).textContent = state[k]);
+    engine.run();
+    ui.tab(p.tab);
+  },
+  activate(containerId, selector){
+    const cont = document.getElementById(containerId);
+    if(!cont) return;
+    cont.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    const m = cont.querySelector(selector);
+    if(m) m.classList.add('active');
+  }
+};
+
+/* ============================================================
+   PWA — registration, install prompt, offline indicator
+   ============================================================ */
+const pwa = {
+  deferredPrompt: null,
+
+  init(){
+    // Service worker registration (silencieux si non supporté)
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.warn('SW registration échouée:', err);
+        });
+      });
+    }
+    // Capture l'événement d'installation Chrome/Edge/Android
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      pwa.deferredPrompt = e;
+      const btn = document.getElementById('install-btn');
+      if(btn) btn.style.display = 'flex';
+    });
+    window.addEventListener('appinstalled', () => {
+      pwa.deferredPrompt = null;
+      const btn = document.getElementById('install-btn');
+      if(btn) btn.style.display = 'none';
+    });
+    // Si déjà en mode standalone, on cache le bouton
+    if(window.matchMedia('(display-mode: standalone)').matches ||
+       window.navigator.standalone === true){
+      const btn = document.getElementById('install-btn');
+      if(btn) btn.style.display = 'none';
+    }
+    // Indicateur hors-ligne
+    pwa.updateOffline();
+    window.addEventListener('online',  pwa.updateOffline);
+    window.addEventListener('offline', pwa.updateOffline);
+  },
+
+  install(){
+    if(!pwa.deferredPrompt){
+      // Fallback iOS / navigateur sans support : aide manuelle
+      alert('Pour installer FireOps :\n\niOS Safari : appuie sur ⎋ Partager → "Sur l\'écran d\'accueil".\nAndroid : menu ⋮ → "Installer l\'application".');
+      return;
+    }
+    pwa.deferredPrompt.prompt();
+    pwa.deferredPrompt.userChoice.then(() => {
+      pwa.deferredPrompt = null;
+      const btn = document.getElementById('install-btn');
+      if(btn) btn.style.display = 'none';
+    });
+  },
+
+  updateOffline(){
+    const chip = document.getElementById('offline-chip');
+    if(!chip) return;
+    chip.style.display = navigator.onLine ? 'none' : 'inline-flex';
+  }
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function clock(){
+  const d = new Date();
+  document.getElementById('clock').textContent = d.toLocaleTimeString('fr-FR');
+}
+setInterval(clock, 1000); clock();
+pwa.init();
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Sliders init
+  ['surface','lances','pari','vicchim','vsav','distance','plance','deniv'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) ui.sync(el, 'lbl-'+id);
+  });
+  // Segmented controls
+  ui.segGroup('seg-type',   b => state.k = +b.dataset.k);
+  ui.segGroup('seg-effort', b => state.conso = +b.dataset.c);
+  ui.segGroup('seg-bottle', b => state.vari = +b.dataset.vari);
+  ui.segGroup('seg-diam',   b => { state.diam = +b.dataset.diam; state.kperte = +b.dataset.coef; });
+  ui.segGroup('seg-danger', b => { state.danger = +b.dataset.d; state.base = +b.dataset.base; });
+  ui.segGroup('seg-vent',   b => state.vent = +b.dataset.v);
+  ui.segGroup('seg-prox',   b => state.prox = +b.dataset.p);
+
+  engine.run();
+});
+</script>
+</body>
+</html>

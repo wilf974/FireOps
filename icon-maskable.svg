@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fond rouge plein bord-à-bord pour maskable (zone safe = 80% centrale) -->
+  <rect width="512" height="512" fill="#b91c1c"/>
+  <g transform="translate(256 256)">
+    <!-- Flamme dans la zone safe (rayon 200) -->
+    <path fill="#ffffff" d="M0 -130
+      C -32 -84, -72 -52, -72 8
+      C -72 68, -36 116, 0 124
+      C 36 116, 72 68, 72 8
+      C 72 -30, 44 -42, 24 -30
+      C 16 -76, 8 -104, 0 -130 Z"/>
+    <path fill="#fbbf24" d="M0 -52
+      C -20 -22, -44 0, -44 36
+      C -44 70, -20 96, 0 100
+      C 20 96, 44 70, 44 36
+      C 44 12, 30 0, 18 8
+      C 12 -18, 4 -38, 0 -52 Z"/>
+    <path fill="#b91c1c" d="M0 12
+      C -12 28, -24 40, -24 58
+      C -24 74, -12 86, 0 90
+      C 12 86, 24 74, 24 58
+      C 24 44, 12 36, 4 40
+      C 3 28, 1 20, 0 12 Z"/>
+  </g>
+</svg>
